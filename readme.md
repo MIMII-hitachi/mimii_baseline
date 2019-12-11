@@ -70,7 +70,7 @@ In addition, we checked performing on **Ubuntu 16.04 LTS**, **18.04 LTS**, **Cen
 
 ### Software packages
 - p7zip-full
-- Pytohn == 3.6.5
+- Python == 3.6.5
 - FFmpeg
 
 ### Python packages
