@@ -223,7 +223,14 @@ def demux_wav(wav_name, sampling_rate=16000, channel=0 ):
 ########################################################################
 # feature extractor
 ########################################################################
-def file_to_vectorarray(filename, sampling_rate=16000 ):
+def file_to_vectorarray(    filename,
+                            sampling_rate=16000,
+                            n_fft=1024,
+                            hop_length=512,
+                            n_mels=64, 
+                            frame=5, 
+                            power=2.0,
+                            **kwargs):
     """
     convert filename to vector array.
 
@@ -237,24 +244,33 @@ def file_to_vectorarray(filename, sampling_rate=16000 ):
         * dataset.shape = (dataset_size, fearture_vector_length)
     """
     # 01 culc. the number of dimensions
-    dims = param["feature"]["bin"] * param["feature"]["frame"]
+    dims = n_mels * frame
     # 02 generate melspectrogram using librosa (**kwargs == param["librosa"])
-    mel_spectrogram_temp = librosa.feature.melspectrogram(   y = demux_wav( filename, sampling_rate=sampling_rate ), 
-                                                        **param["librosa"])
+    mel_spectrogram_temp = librosa.feature.melspectrogram(  y = demux_wav( filename, sampling_rate=sampling_rate ), 
+                                                            n_fft = n_fft, 
+                                                            hop_length=hop_length, 
+                                                            n_mels=n_mels, 
+                                                            power=power,
+                                                            **kwargs)
     # 03 convert melspectrogram to log mel energy
-    mel_spectrogram = 20.0 / param["librosa"]["power"] * numpy.log10(mel_spectrogram_temp + sys.float_info.epsilon)
+    mel_spectrogram = 20.0 / power * numpy.log10(mel_spectrogram_temp + sys.float_info.epsilon)
     # 04 culc. total vector size
-    vectorarray_size = len(mel_spectrogram[0,:]) - param["feature"]["frame"] + 1
+    vectorarray_size = len(mel_spectrogram[0,:]) - frame + 1
     # 05-1 Skip too short clip
     if vectorarray_size < 1:
         return numpy.empty((0, dims), float)
     # 05-2 Multiframes
     vectorarray = numpy.empty((vectorarray_size, 0), float)
     # 06 gegnerate vectors
-    for t in range(param["feature"]["frame"]):
+    for t in range(frame):
         vectorarray = numpy.concatenate((vectorarray, mel_spectrogram[:, t : t + vectorarray_size].T), axis = 1)
     return vectorarray
-def list_to_dataset(file_list, msg = "culc...", sampling_rate=16000):
+def list_to_dataset(file_list, msg = "culc...",
+                    sampling_rate=16000,
+                    n_mels=64,
+                    frame=5, 
+                    power=2.0, 
+                    **kwargs):
     """
     convert the file_list to dataset.
     in this function, file_to_vectorarray is looped, and concatenated.
@@ -273,17 +289,26 @@ def list_to_dataset(file_list, msg = "culc...", sampling_rate=16000):
         * dataset.shape = (total_dataset_size, fearture_vector_length)
     """
     # 01 culc. the number of dimensions
-    dims = param["feature"]["bin"] * param["feature"]["frame"]
+    dims = n_mels * frame
     # 02 initialize the dataset
     dataset = numpy.empty( (0, dims ), float )
     # 03 loop of file_to_vectorarray
     for filename in tqdm( file_list, desc=msg ):
-        vectorarray = file_to_vectorarray( filename, sampling_rate=sampling_rate )
+        vectorarray = file_to_vectorarray( filename, 
+                                            sampling_rate=sampling_rate,
+                                            n_mels=n_mels,
+                                            frame=frame, 
+                                            power=power, 
+                                            **kwargs )
         dataset = numpy.concatenate((dataset, vectorarray ), axis=0)
     return dataset
 def dataset_generator(  target_dir, train_pickle, eval_pickle, eval_meta_pickle,
                         normal="normal", abnormal="abnormal", ext="wav",
-                        sampling_rate=16000):
+                        sampling_rate=16000,
+                        n_mels=64,
+                        frame=5, 
+                        power=2.0, 
+                        **kwargs):
     """
     target_dir : str
         base directory path of the dataset
@@ -334,7 +359,13 @@ def dataset_generator(  target_dir, train_pickle, eval_pickle, eval_meta_pickle,
     logger.info( "eval_file  num : {num}".format( num=len(eval_dataset_list)  ) )
 
     # 04 generate data
-    train_data = list_to_dataset(train_dataset_list, msg = "generate train_dataset", sampling_rate=sampling_rate )
+    train_data = list_to_dataset(   train_dataset_list,
+                                    msg = "generate train_dataset",
+                                    sampling_rate=sampling_rate,
+                                    n_mels=n_mels,
+                                    frame=frame, 
+                                    power=power, 
+                                    **kwargs )
     ID = numpy.random.permutation(len(train_data[:,0]))
     train_data = train_data[ID,:]
 
@@ -407,8 +438,11 @@ if __name__ == "__main__":
             eval_dataset_list = load_pickle(eval_pickle)
             eval_meta_list = load_pickle(eval_meta_pickle)
         else:
-            train_data, eval_dataset_list, eval_meta_list = dataset_generator( target_dir, train_pickle, eval_pickle, eval_meta_pickle, sampling_rate=param["audio"]["sr"] )
-
+            train_data, eval_dataset_list, eval_meta_list = dataset_generator( target_dir, train_pickle, eval_pickle, eval_meta_pickle,
+                                                                                sampling_rate=param["audio"]["sr"],
+                                                                                n_mels=param["feature"]["bin"],
+                                                                                frame=param["feature"]["frame"], 
+                                                                                **param["librosa"] )
         # model training
         print("==== MODEL TRAINING ====")
         model = keras_model( param["feature"]["bin"] * param["feature"]["frame"] )
@@ -434,7 +468,9 @@ if __name__ == "__main__":
         y_true = eval_meta_list
         for num, filename in tqdm( enumerate(eval_dataset_list), total=len(eval_dataset_list) ):
             try:
-                data = file_to_vectorarray(filename, sampling_rate=param["audio"]["sr"])
+                data = file_to_vectorarray( filename,
+                                            sampling_rate=param["audio"]["sr"],
+                                            **param["librosa"])
                 pred_temp = numpy.mean(numpy.square( data - model.predict( data ) ), axis=1)
                 y_pred[num] =  numpy.mean(pred_temp)
             except:
