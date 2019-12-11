@@ -1,0 +1,31 @@
+base_directory : ./dataset
+pickle_directory: ./pickle
+model_directory: ./model
+result_directory: ./result
+result_file: result.yaml
+
+audio:
+  bit : 16
+  sr: 16000
+  sec : 10.
+  channels : 8
+
+feature:
+  bin: 64
+  frame : 5
+
+librosa:
+  n_fft: 1024
+  hop_length: 512
+  n_mels: 64
+  power: 2.0
+
+fit:
+  compile:
+    optimizer : adam
+    loss : mean_squared_error
+  epochs : 50
+  batch_size : 512
+  shuffle : True
+  validation_split : 0.1
+  verbose : 1
