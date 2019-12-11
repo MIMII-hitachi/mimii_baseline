@@ -225,10 +225,10 @@ def demux_wav(wav_name, sampling_rate=16000, channel=0 ):
 ########################################################################
 def file_to_vectorarray(    filename,
                             sampling_rate=16000,
-                            n_fft=1024,
-                            hop_length=512,
                             n_mels=64, 
                             frame=5, 
+                            n_fft=1024,
+                            hop_length=512,
                             power=2.0,
                             **kwargs):
     """
@@ -470,6 +470,8 @@ if __name__ == "__main__":
             try:
                 data = file_to_vectorarray( filename,
                                             sampling_rate=param["audio"]["sr"],
+                                            n_mels = param["feature"]["bin"],
+                                            frame = param["feature"]["frame"],
                                             **param["librosa"])
                 pred_temp = numpy.mean(numpy.square( data - model.predict( data ) ), axis=1)
                 y_pred[num] =  numpy.mean(pred_temp)
