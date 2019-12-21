@@ -74,7 +74,7 @@ fan_id_06_6dB:
 ## Dependency
 
 We develop the source code on Ubuntu 16.04 LTS and 18.04 LTS.
-In addition, we checked performing on **Ubuntu 16.04 LTS**, **18.04 LTS**, **Cent OS 7** and **Windows 10**.
+In addition, we checked performing on **Ubuntu 16.04 LTS**, **18.04 LTS**, **Cent OS 7**, and **Windows 10**.
 
 ### Software packages
 - p7zip-full
