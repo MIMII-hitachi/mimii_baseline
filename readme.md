@@ -1,8 +1,8 @@
 # MIMII dataset baseline (Ver.1.0.0)
 
-This sample code is a baseline of anomaly detection for the MIMII dataset.
+This sample code is a baseline of anomaly detection for MIMII dataset.
 
-MIMII Dataset is a sound dataset for malfunctioning industrial machine investigation and inspection. It contains the sounds generated from four types of industrial machines, i.e. valves, pumps, fans, and slide rails. Each type of machine includes multiple individual product models, and the data for each model contains normal and anomalous sounds. To resemble a real-life scenario, various anomalous sounds were recorded. Also, the background noise recorded in multiple real factories was mixed with the machine sounds. 
+The MIMII Dataset is a sound dataset for malfunctioning industrial machine investigation and inspection. It contains the sounds generated from four types of industrial machines, i.e. valves, pumps, fans, and slide rails. Each type of machine includes multiple individual product models, and the data for each model contains normal and anomalous sounds. To resemble a real-life scenario, various anomalous sounds were recorded. Also, the background noise recorded in multiple real factories was mixed with the machine sounds. 
 
 The MIMII Dataset can be downloaded at: https://zenodo.org/record/3384388
 
