@@ -2,7 +2,7 @@
 
 This is the baseline system for MIMII dataset.
 
-[MIMII Dataset: Sound Dataset for Malfunctioning Industrial Machine Investigation and Inspection](https://zenodo.org/record/3384388#.Xd6e7dFUthE)  
+[MIMII Dataset: Sound Dataset for Malfunctioning Industrial Machine Investigation and Inspection](https://zenodo.org/record/3384388)  
 
 ## Usage
 
