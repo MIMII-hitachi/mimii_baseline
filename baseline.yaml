@@ -11,10 +11,8 @@ audio:
   channels : 8
 
 feature:
-  bin: 64
-  frame : 5
-
-librosa:
+  n_mels: 64
+  frames : 5
   n_fft: 1024
   hop_length: 512
   power: 2.0
