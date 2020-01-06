@@ -93,7 +93,7 @@ from keras.layers import Input, Dense
 ########################################################################
 # version
 ########################################################################
-__versions__ = "1.0.0"
+__versions__ = "1.0.1"
 ########################################################################
 
 
@@ -146,7 +146,7 @@ class visualizer(object):
 # mkdir
 def try_mkdir(dirname, silence = False):
     """
-    generate output directory.
+    make output directory.
 
     dirname : str
         directory name.
@@ -197,7 +197,7 @@ def load_pickle(filename):
 # wav file Input
 def file_load(wav_name, sampling_rate = 16000, mono = False):
     """
-    load a .wav file.
+    load .wav file.
 
     wav_name : str
         target .wav file
@@ -236,7 +236,7 @@ def demux_wav(wav_name, sampling_rate = 16000, channel = 0):
 ########################################################################
 # feature extractor
 ########################################################################
-def file_to_vector_array(filename,
+def file_to_vector_array(file_name,
                          sampling_rate = 16000,
                          n_mels = 64, 
                          frames = 5, 
@@ -244,9 +244,9 @@ def file_to_vector_array(filename,
                          hop_length = 512,
                          power = 2.0):
     """
-    convert filename to a vector array.
+    convert file_name to a vector array.
 
-    filename : str
+    file_name : str
         target .wav file
 
     return : numpy.array( numpy.array( float ) )
@@ -257,7 +257,7 @@ def file_to_vector_array(filename,
     dims = n_mels * frames
     
     # 02 generate melspectrogram using librosa (**kwargs == param["librosa"])
-    mel_spectrogram = librosa.feature.melspectrogram(y = demux_wav(filename, sampling_rate = sampling_rate), 
+    mel_spectrogram = librosa.feature.melspectrogram(y = demux_wav(file_name, sampling_rate = sampling_rate), 
                                                      n_fft = n_fft, 
                                                      hop_length = hop_length, 
                                                      n_mels = n_mels, 
@@ -274,9 +274,9 @@ def file_to_vector_array(filename,
         return numpy.empty((0, dims), float)
     
     # 06 generate feature vectors by concatenating multiframes
-    vectorarray = numpy.empty((vectorarray_size, 0), float)
+    vectorarray = numpy.zeros((vectorarray_size, dims), float)
     for t in range(frames):
-        vectorarray = numpy.concatenate((vectorarray, log_mel_spectrogram[:, t : t + vectorarray_size].T), axis = 1)
+        vectorarray[:, n_mels * t : n_mels * (t + 1)] = log_mel_spectrogram[:, t : t + vectorarray_size].T
         
     return vectorarray
 
@@ -304,22 +304,22 @@ def list_to_vector_array(file_list,
     """
     # 01 calculate the number of dimensions
     dims = n_mels * frames
-    
-    # 02 initialize the dataset
-    dataset = numpy.empty((0, dims), float)
 
-    # 03 loop of file_to_vectorarray
-    for filename in tqdm(file_list, desc = msg):
+    # 02 loop of file_to_vectorarray
+    for idx in tqdm(range(len(file_list)), desc = msg):
 
-        vector_array = file_to_vector_array(filename, 
-                                          sampling_rate = sampling_rate,
-                                          n_mels = n_mels,
-                                          frames = frames, 
-                                          n_fft = n_fft,
-                                          hop_length = hop_length,
-                                          power = power)
+        vector_array = file_to_vector_array(file_list[idx],
+                                            sampling_rate = sampling_rate,
+                                            n_mels = n_mels,
+                                            frames = frames, 
+                                            n_fft = n_fft,
+                                            hop_length = hop_length,
+                                            power = power)
         
-        dataset = numpy.concatenate((dataset, vector_array), axis = 0)
+        if idx == 0:
+            dataset = numpy.zeros((vector_array.shape[0] * len(file_list), dims), float)
+
+        dataset[vector_array.shape[0] * idx : vector_array.shape[0] * (idx + 1), :] = vector_array
         
     return dataset
 
@@ -381,8 +381,8 @@ def dataset_generator(target_dir,
 ########################################################################
 def keras_model(inputDim):
     """
-    declare the keras model
-    the model based on the simple dense auto encoder (64*64*8*64*64).
+    define the keras model
+    the model based on the simple dense auto encoder (64*64*8*64*64)
     """
     inputLayer = Input(shape = (inputDim, ))
     h = Dense(64, activation = "relu")(inputLayer)
@@ -401,7 +401,7 @@ def keras_model(inputDim):
 ########################################################################
 if __name__ == "__main__":
 
-    # generate output directory
+    # make output directory
     try_mkdir(param["pickle_directory"])
     try_mkdir(param["model_directory"])
     try_mkdir(param["result_directory"])
@@ -484,9 +484,9 @@ if __name__ == "__main__":
         y_pred = [0. for k in eval_labels]
         y_true = eval_labels
 
-        for num, filename in tqdm(enumerate(eval_files), total = len(eval_files)):
+        for num, file_name in tqdm(enumerate(eval_files), total = len(eval_files)):
             try:
-                data = file_to_vector_array(filename,
+                data = file_to_vector_array(file_name,
                                             sampling_rate = param["audio"]["sr"],
                                             n_mels = param["feature"]["n_mels"],
                                             frames = param["feature"]["frames"],
@@ -496,7 +496,7 @@ if __name__ == "__main__":
                 error = numpy.mean(numpy.square(data - model.predict(data)), axis = 1)
                 y_pred[num] = numpy.mean(error)
             except:
-                logger.warning( "File broken!! : {}".format(filename))
+                logger.warning( "File broken!! : {}".format(file_name))
 
         score = metrics.roc_auc_score(y_true, y_pred)
         logger.info("AUC : {}".format(score))
