@@ -1,4 +1,4 @@
-# MIMII dataset baseline (Ver.1.0.0)
+# MIMII dataset baseline (Ver.1.0.1)
 
 This sample code is a baseline of anomaly detection for MIMII dataset.
 
