@@ -4,12 +4,6 @@ model_directory: ./model
 result_directory: ./result
 result_file: result.yaml
 
-audio:
-  bit : 16
-  sr: 16000
-  sec : 10.
-  channels : 8
-
 feature:
   n_mels: 64
   frames : 5

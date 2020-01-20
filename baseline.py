@@ -22,12 +22,6 @@ model_directory: ./model
 result_directory: ./result
 result_file: result.yaml
 
-audio:
-  bit : 16
-  sr: 16000
-  sec : 10.
-  channels : 8
-
 feature:
   n_mels: 64
   frames : 5
@@ -195,7 +189,7 @@ def load_pickle(filename):
     return data
 
 # wav file Input
-def file_load(wav_name, sampling_rate = 16000, mono = False):
+def file_load(wav_name, mono = False):
     """
     load .wav file.
 
@@ -209,11 +203,11 @@ def file_load(wav_name, sampling_rate = 16000, mono = False):
     return : numpy.array( float )
     """
     try:
-        return librosa.load(wav_name, sr = sampling_rate, mono = mono)
+        return librosa.load(wav_name, sr = None, mono = mono)
     except:
         logger.error( f'{"file_broken or not exists!! : {}".format(wav_name)}' )
         
-def demux_wav(wav_name, sampling_rate = 16000, channel = 0):
+def demux_wav(wav_name,  channel = 0):
     """
     demux .wav file.
 
@@ -224,10 +218,18 @@ def demux_wav(wav_name, sampling_rate = 16000, channel = 0):
 
     return : numpy.array( float )
         demuxed monoral data
+
+    Enabled to read multiple sampling rates.
+
+    Enabled even one channel.
     """
     try:
-        multi_channel_data, sr = file_load(wav_name, sampling_rate = sampling_rate)
-        return numpy.array(multi_channel_data)[channel, :]
+        multi_channel_data, sr = file_load(wav_name)
+        if multi_channel_data.ndim <= 1:
+            return sr,multi_channel_data
+
+        return sr, numpy.array(multi_channel_data)[channel, :]
+
     except ValueError as f:
         logger.warning(f'{f}')
 ########################################################################
@@ -237,9 +239,8 @@ def demux_wav(wav_name, sampling_rate = 16000, channel = 0):
 # feature extractor
 ########################################################################
 def file_to_vector_array(file_name,
-                         sampling_rate = 16000,
-                         n_mels = 64, 
-                         frames = 5, 
+                         n_mels = 64,
+                         frames = 5,
                          n_fft = 1024,
                          hop_length = 512,
                          power = 2.0):
@@ -255,20 +256,22 @@ def file_to_vector_array(file_name,
     """
     # 01 calculate the number of dimensions
     dims = n_mels * frames
-    
+
     # 02 generate melspectrogram using librosa (**kwargs == param["librosa"])
-    mel_spectrogram = librosa.feature.melspectrogram(y = demux_wav(file_name, sampling_rate = sampling_rate), 
-                                                     n_fft = n_fft, 
-                                                     hop_length = hop_length, 
-                                                     n_mels = n_mels, 
+    sr,y=demux_wav(file_name)
+    mel_spectrogram = librosa.feature.melspectrogram(y = y,
+                                                     sr = sr,
+                                                     n_fft = n_fft,
+                                                     hop_length = hop_length,
+                                                     n_mels = n_mels,
                                                      power = power)
-    
+
     # 03 convert melspectrogram to log mel energy
     log_mel_spectrogram = 20.0 / power * numpy.log10(mel_spectrogram + sys.float_info.epsilon)
-    
+
     # 04 calculate total vector size
     vectorarray_size = len(log_mel_spectrogram[0,:]) - frames + 1
-    
+
     # 05 skip too short clips
     if vectorarray_size < 1:
         return numpy.empty((0, dims), float)
@@ -282,7 +285,6 @@ def file_to_vector_array(file_name,
 
 def list_to_vector_array(file_list, 
                          msg = "calc...",
-                         sampling_rate = 16000,
                          n_mels = 64,
                          frames = 5, 
                          n_fft = 1024,
@@ -309,7 +311,6 @@ def list_to_vector_array(file_list,
     for idx in tqdm(range(len(file_list)), desc = msg):
 
         vector_array = file_to_vector_array(file_list[idx],
-                                            sampling_rate = sampling_rate,
                                             n_mels = n_mels,
                                             frames = frames, 
                                             n_fft = n_fft,
@@ -446,7 +447,6 @@ if __name__ == "__main__":
             
             train_data = list_to_vector_array(train_files,
                                  msg = "generate train_dataset",
-                                 sampling_rate = param["audio"]["sr"],
                                  n_mels = param["feature"]["n_mels"],
                                  frames = param["feature"]["frames"], 
                                  n_fft = param["feature"]["n_fft"],
@@ -487,7 +487,6 @@ if __name__ == "__main__":
         for num, file_name in tqdm(enumerate(eval_files), total = len(eval_files)):
             try:
                 data = file_to_vector_array(file_name,
-                                            sampling_rate = param["audio"]["sr"],
                                             n_mels = param["feature"]["n_mels"],
                                             frames = param["feature"]["frames"],
                                             n_fft = param["feature"]["n_fft"],
@@ -496,7 +495,7 @@ if __name__ == "__main__":
                 error = numpy.mean(numpy.square(data - model.predict(data)), axis = 1)
                 y_pred[num] = numpy.mean(error)
             except:
-                logger.warning( "File broken!! : {}".format(file_name))
+                logger.warning( "File broken!!: {}".format(file_name))
 
         score = metrics.roc_auc_score(y_true, y_pred)
         logger.info("AUC : {}".format(score))
