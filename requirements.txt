@@ -1,11 +1,12 @@
 # Minimal package to use MIMII dataset baseline.
 keras==2.1.6
-Keras-Applications==1.0.2
-Keras-Preprocessing==1.0.1
+Keras-Applications==1.0.8
+Keras-Preprocessing==1.0.5
 matplotlib==3.0.3
-numpy==1.15.4
-PyYAML==3.13
+numpy==1.16.0
+PyYAML==5.1
 scikit-learn==0.20.2
 librosa==0.6.0
 audioread==2.1.5
-tensorflow==1.7.0
+setuptools==41.0.0
+tensorflow==1.15.0
