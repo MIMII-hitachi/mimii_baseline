@@ -82,7 +82,7 @@ In addition, we checked performing on **Ubuntu 16.04 LTS**, **18.04 LTS**, **Cen
 - FFmpeg
 
 ### Python packages
-- Keras                         == 2.1.5
+- Keras                         == 2.1.6
 - Keras-Applications            == 1.0.2
 - Keras-Preprocessing           == 1.0.1
 - matplotlib                    == 3.0.3
@@ -91,4 +91,4 @@ In addition, we checked performing on **Ubuntu 16.04 LTS**, **18.04 LTS**, **Cen
 - scikit-learn                  == 0.20.2
 - librosa                       == 0.6.0
 - audioread                     == 2.1.5 (more)
-
+- tensorflow                    == 1.7.0
