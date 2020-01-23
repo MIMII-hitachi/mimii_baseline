@@ -4,7 +4,7 @@ Keras-Applications==1.0.2
 Keras-Preprocessing==1.0.1
 matplotlib==3.0.3
 numpy==1.15.4
-PyYAML==3.13
+PyYAML==5.1
 scikit-learn==0.20.2
 librosa==0.6.0
 audioread==2.1.5
