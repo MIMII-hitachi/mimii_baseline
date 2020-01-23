@@ -8,4 +8,4 @@ PyYAML==3.13
 scikit-learn==0.20.2
 librosa==0.6.0
 audioread==2.1.5
-tensorflow==1.7.0
+tensorflow==1.15.0
