@@ -9,4 +9,4 @@ scikit-learn==0.20.2
 librosa==0.6.0
 audioread==2.1.5
 setuptools==41.0.0
-tensorflow==1.15.0
+tensorflow==1.15.4
